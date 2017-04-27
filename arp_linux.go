@@ -18,10 +18,20 @@ const (
 )
 
 func Table() ArpTable {
+	table, _ := Table12()
+	return table
+}
+
+func Table2() ArpTable2 {
+	_, table := Table12()
+	return table
+}
+
+func Table12() (ArpTable, ArpTable2) {
 	f, err := os.Open("/proc/net/arp")
 
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 
 	defer f.Close()
@@ -29,13 +39,23 @@ func Table() ArpTable {
 	s := bufio.NewScanner(f)
 	s.Scan() // skip the field descriptions
 
-	var table = make(ArpTable)
+	table1 := make(ArpTable)
+	table2 := make(ArpTable2)
 
 	for s.Scan() {
 		line := s.Text()
 		fields := strings.Fields(line)
-		table[fields[f_IPAddr]] = fields[f_HWAddr]
+		entry := ArpInfo{
+			IPAddr: fields[f_IPAddr],
+			HWType: fields[f_HWAddr],
+			Flags:  fields[f_Flags],
+			HWAddr: fields[f_HWAddr],
+			Mask:   fields[f_Mask],
+			Device: fields[f_Device],
+		}
+		table1[entry.IPAddr] = entry.HWAddr
+		table2[entry.IPAddr] = entry
 	}
 
-	return table
+	return table1, table2
 }

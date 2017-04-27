@@ -47,3 +47,12 @@ func Table() ArpTable {
 
 	return table
 }
+
+func Table12() (ArpTable, ArpTable2) {
+	return Table(), Table2()
+}
+
+func Table2() ArpTable2 {
+	// Not implemented.
+	return nil
+}

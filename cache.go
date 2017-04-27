@@ -7,7 +7,8 @@ import (
 
 type cache struct {
 	sync.RWMutex
-	table ArpTable
+	table  ArpTable
+	table2 ArpTable2
 
 	Updated      time.Time
 	UpdatedCount int
@@ -17,7 +18,7 @@ func (c *cache) Refresh() {
 	c.Lock()
 	defer c.Unlock()
 
-	c.table = Table()
+	c.table, c.table2 = Table12()
 	c.Updated = time.Now()
 	c.UpdatedCount += 1
 }
@@ -36,4 +37,20 @@ func (c *cache) Search(ip string) string {
 	}
 
 	return mac
+}
+
+func (c *cache) Search2(ip string) ArpInfo {
+	c.RLock()
+	defer c.RUnlock()
+
+	info, ok := c.table2[ip]
+
+	if !ok {
+		c.RUnlock()
+		c.Refresh()
+		c.RLock()
+		info = c.table2[ip]
+	}
+
+	return info
 }
