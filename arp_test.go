@@ -131,6 +131,11 @@ func TestLocal(t *testing.T) {
 			t.Error("expected", macStr, "got", result.HWAddr)
 		}
 	}
+
+	result := Search2("127.0.0.1")
+	if result.HWAddr == "" {
+		t.Error("expected something for 127.0.0.1 got nothing")
+	}
 }
 
 func BenchmarkSearch(b *testing.B) {

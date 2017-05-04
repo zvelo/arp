@@ -63,6 +63,24 @@ func (c *cache) RefreshLocal() {
 			}
 		}
 	}
+
+	// And for localhost, 127.0.0.1 just pick one.
+	localAddr := "127.0.0.1"
+	localHardwareAddr := net.HardwareAddr{}
+	for _, inf := range allInterfaces {
+		if len(inf.HardwareAddr) != 0 {
+			localHardwareAddr = inf.HardwareAddr
+			break
+		}
+	}
+
+	c.table[localAddr] = localHardwareAddr.String()
+	c.table2[localAddr] = ArpInfo{
+		IPAddr: localAddr,
+		HWAddr: localHardwareAddr.String(),
+		Flags:  "0x2",
+		Device: "lo",
+	}
 }
 
 func (c *cache) Search(ip string) string {
