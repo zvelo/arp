@@ -1,6 +1,7 @@
 package arp
 
 import (
+	"net"
 	"sync"
 	"time"
 )
@@ -10,6 +11,7 @@ type cache struct {
 	table  ArpTable
 	table2 ArpTable2
 
+	IncludeLocal bool
 	Updated      time.Time
 	UpdatedCount int
 }
@@ -19,8 +21,48 @@ func (c *cache) Refresh() {
 	defer c.Unlock()
 
 	c.table, c.table2 = Table12()
+	if c.IncludeLocal {
+		c.RefreshLocal()
+	}
 	c.Updated = time.Now()
 	c.UpdatedCount += 1
+}
+
+func addressToIPString(addr net.Addr) string {
+	switch x := addr.(type) {
+	case *net.IPNet:
+		return x.IP.String()
+	case *net.IPAddr:
+		return x.IP.String()
+	}
+	return ""
+}
+
+func (c *cache) RefreshLocal() {
+	allInterfaces, err := net.Interfaces()
+	if err != nil {
+		return
+	}
+	for _, inf := range allInterfaces {
+		if len(inf.HardwareAddr) == 0 {
+			continue
+		}
+		addresses, err := inf.Addrs()
+		if err != nil || len(addresses) == 0 {
+			continue
+		}
+		for _, addr := range addresses {
+			macStr := inf.HardwareAddr.String()
+			addrStr := addressToIPString(addr)
+			c.table[addrStr] = macStr
+			c.table2[addrStr] = ArpInfo{
+				IPAddr: addrStr,
+				HWAddr: macStr,
+				Flags:  "0x2",
+				Device: inf.Name,
+			}
+		}
+	}
 }
 
 func (c *cache) Search(ip string) string {

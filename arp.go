@@ -53,6 +53,10 @@ func CacheUpdateCount() int {
 	return arpCache.UpdatedCount
 }
 
+func CacheIncludeLocal() {
+	arpCache.IncludeLocal = true
+}
+
 // Search looks up the MAC address for an IP address
 // in the arp table
 func Search(ip string) string {

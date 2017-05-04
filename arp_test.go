@@ -2,6 +2,7 @@ package arp
 
 import (
 	"fmt"
+	"net"
 	"testing"
 	"time"
 )
@@ -73,6 +74,61 @@ func TestSearch(t *testing.T) {
 		result := Search(ip)
 		if test != result {
 			t.Errorf("expected %s got %s", test, result)
+		}
+	}
+}
+
+func getTestInterface() (result net.Interface, err error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return
+	}
+	for _, inf := range interfaces {
+		if inf.Flags&net.FlagUp != 0 && len(inf.HardwareAddr) != 0 {
+			if addrs, err2 := inf.Addrs(); err2 == nil && len(addrs) != 0 {
+				result = inf
+				return
+			}
+		}
+	}
+	err = fmt.Errorf("unable to find test interface")
+	return
+}
+
+func TestLocalOff(t *testing.T) {
+	testInf, err := getTestInterface()
+	if err != nil {
+		t.Error(err)
+	}
+	addrs, err := testInf.Addrs()
+	if err != nil {
+		t.Error(err)
+	}
+	for _, addr := range addrs {
+		addrStr := addressToIPString(addr)
+		result := Search2(addrStr)
+		if result.HWAddr != "" {
+			t.Error("expected nothing got", result.HWAddr)
+		}
+	}
+}
+
+func TestLocal(t *testing.T) {
+	CacheIncludeLocal()
+	testInf, err := getTestInterface()
+	if err != nil {
+		t.Error(err)
+	}
+	macStr := testInf.HardwareAddr.String()
+	addrs, err := testInf.Addrs()
+	if err != nil {
+		t.Error(err)
+	}
+	for _, addr := range addrs {
+		addrStr := addressToIPString(addr)
+		result := Search2(addrStr)
+		if result.HWAddr != macStr {
+			t.Error("expected", macStr, "got", result.HWAddr)
 		}
 	}
 }
