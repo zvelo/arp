@@ -65,7 +65,8 @@ func (c *cache) RefreshLocal() {
 	}
 
 	// And for localhost, 127.0.0.1 just pick one.
-	localAddr := "127.0.0.1"
+	localIPv4Addr := "127.0.0.1"
+	localIPv6Addr := "::1"
 	localHardwareAddr := net.HardwareAddr{}
 	for _, inf := range allInterfaces {
 		if len(inf.HardwareAddr) != 0 {
@@ -74,9 +75,16 @@ func (c *cache) RefreshLocal() {
 		}
 	}
 
-	c.table[localAddr] = localHardwareAddr.String()
-	c.table2[localAddr] = ArpInfo{
-		IPAddr: localAddr,
+	c.table[localIPv4Addr] = localHardwareAddr.String()
+	c.table2[localIPv4Addr] = ArpInfo{
+		IPAddr: localIPv4Addr,
+		HWAddr: localHardwareAddr.String(),
+		Flags:  "0x2",
+		Device: "lo",
+	}
+	c.table[localIPv6Addr] = localHardwareAddr.String()
+	c.table2[localIPv6Addr] = ArpInfo{
+		IPAddr: localIPv6Addr,
 		HWAddr: localHardwareAddr.String(),
 		Flags:  "0x2",
 		Device: "lo",
